@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "browser": "dist/index.js",
+  "browser_img": "dist/index_img.js",
   "dependencies": {
     "chromotome": "^1.2.0"
   },

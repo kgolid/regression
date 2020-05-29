@@ -12,28 +12,29 @@
   let learningRate, optimizer;
   let theta;
 
-  let dragging;
+  let nx, ny;
+  let imgpixels;
+
+  const maxWidth = 800;
+  const maxHeight = 800;
 
   let sketch = function (p) {
     p.setup = function () {
-      p.createCanvas(800, 800);
+      const c = p.createCanvas(800, 800);
+
       p.noFill();
 
-      learningRate = 0.02;
+      learningRate = 0.2;
       optimizer = tf.train.adam(learningRate);
       theta = tf.randomUniform([degree]).variable();
 
-      dragging = false;
+
+      c.drop(gotFile, fileDropped);
+      c.dragOver(fileDropped);
     };
 
     p.draw = function () {
-      if (dragging) {
-        const x = p.map(p.mouseX, 0, p.width, -1, 1);
-        const y = p.map(p.mouseY, 0, p.height, 1, -1);
-
-        x_vals.push(x);
-        y_vals.push(y);
-      } else if (x_vals.length > 0) {
+      if (x_vals.length > 0) {
         optimizer.minimize(() => tf.tidy(() => loss(predict(x_vals), y_vals)));
       }
 
@@ -41,10 +42,6 @@
       draw_points(x_vals, y_vals);
       draw_prediction();
     };
-
-    p.mousePressed = () => dragging = true;
-
-    p.mouseReleased = () => dragging = false;
 
     function draw_points(xs, ys) {
       p.stroke(255, 50, 50);
@@ -73,6 +70,36 @@
       const predictions = tf.tidy(() => predict(x_range).dataSync());
       draw_line(x_range, predictions);
     }
+
+    function gotFile(file) {
+      if (file.type === 'image') {
+        p.loadImage(file.data, imageLoaded);
+      } else {
+        console.log('Not an image file!');
+      }
+    }
+
+    function imageLoaded(img) {
+      if (img.height / maxHeight > img.width / maxWidth) {
+        if (img.height > maxHeight) img.resize(0, maxHeight);
+      } else {
+        if (img.width > maxWidth) img.resize(maxWidth, 0);
+      }
+
+      img.loadPixels();
+
+      nx = Math.floor(img.width);
+      ny = Math.floor(img.height);
+      p.resizeCanvas(nx, ny);
+
+      imgpixels = newArray(ny).map((_, j) =>
+        newArray(nx).map((_, i) => {
+          var loc = (i + j * img.width) * 4;
+          return [img.pixels[loc + 0], img.pixels[loc + 1], img.pixels[loc + 2]];
+        })
+      );
+      console.log(imgpixels);
+    }
   };
   new p5(sketch);
 
@@ -86,6 +113,18 @@
 
   function loss(pred, y_vals) {
     return pred.sub(tf.tensor1d(y_vals)).square().mean();
+  }
+
+  function fileDropped() {
+  }
+
+  function newArray(n, value) {
+    n = n || 0;
+    var array = new Array(n);
+    for (var i = 0; i < n; i++) {
+      array[i] = value;
+    }
+    return array;
   }
 
 }));

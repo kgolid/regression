@@ -10,5 +10,13 @@ export default [
       format: 'umd'
     },
     plugins: [resolve(), commonjs()]
+  },
+  {
+    input: 'index_img.js',
+    output: {
+      file: pkg.browser_img,
+      format: 'umd'
+    },
+    plugins: [resolve(), commonjs()]
   }
 ];
